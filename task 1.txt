@@ -1,0 +1,38 @@
+pip install pandas scikit-learn
+import pandas as pd
+from sklearn.model_selection import train_test_split
+from sklearn.feature_extraction.text import TfidfVectorizer
+from sklearn.linear_model import LogisticRegression
+from sklearn.metrics import accuracy_score
+df = pd.read_csv('IMDb movies.csv', low_memory=False)
+
+data = df[['title', 'genre']]
+data = data.dropna(subset=['genre'])
+
+data['genre'] = data['genre'].apply(lambda x: x.split(',')[0])
+train_data, test_data = train_test_split(data, test_size=0.2, random_state=42)
+X_train = train_data['title']
+y_train = train_data['genre']
+X_test = test_data['title']
+y_test = test_data['genre']
+vectorizer = TfidfVectorizer(max_features=10000, ngram_range=(1, 2), stop_words='english')
+
+X_train_vec = vectorizer.fit_transform(X_train)
+X_test_vec = vectorizer.transform(X_test)
+model = LogisticRegression(max_iter=500)
+
+model.fit(X_train_vec, y_train)
+
+y_pred = model.predict(X_test_vec)
+
+
+accuracy = accuracy_score(y_test, y_pred)
+print(f"Model Accuracy: {accuracy:.2f}")
+
+
+new_titles = ["The Dark Knight", "The Shawshank Redemption", "Inception"]
+
+for title in new_titles:
+    title_vec = vectorizer.transform([title])
+    predicted_genre = model.predict(title_vec)[0]
+    print(f"The predicted genre of '{title}' is: {predicted_genre}")
